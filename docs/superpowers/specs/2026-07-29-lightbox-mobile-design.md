@@ -15,6 +15,9 @@ O produto será uma PWA estática, construída com HTML, CSS e JavaScript sem de
 - Um botão de cadeado permanece no canto superior direito. No estado desbloqueado, gestos atualizam a transformação da imagem. No estado bloqueado, a área da imagem ignora todos os gestos e mantém exatamente o último zoom e posição.
 - O cadeado permanece clicável no estado bloqueado para restaurar a interação.
 - Um botão de redefinição restaura escala e posição iniciais.
+- Um botão `Transformar` abre um painel inferior com efeitos aplicados de forma não destrutiva: alternâncias independentes para preto e branco e sépia, além de botões para aumentar ou diminuir o contraste em níveis.
+- Os efeitos são empilháveis; por exemplo, sépia e contraste aumentado podem ficar ativos simultaneamente. O botão `Original` remove todos os efeitos e devolve o contraste ao nível neutro.
+- Os controles de transformação permanecem utilizáveis enquanto o cadeado está ativo; o bloqueio afeta somente os gestos de zoom e arraste na imagem.
 - A interface se adapta a retrato e paisagem, preservando a transformação enquanto houver espaço disponível.
 
 ## Dados e privacidade
@@ -35,3 +38,5 @@ A imagem escolhida é lida localmente pelo navegador e nunca é enviada a um ser
 4. Ao desbloquear, os mesmos gestos voltam a funcionar.
 5. A redefinição recupera zoom e posição padrão.
 6. O app pode ser instalado como PWA e carregar sua interface offline após a instalação.
+7. Preto e branco, sépia e ajustes de contraste podem ser combinados, com atualização imediata da prévia.
+8. `Original` remove todos os efeitos sem modificar o arquivo selecionado.
