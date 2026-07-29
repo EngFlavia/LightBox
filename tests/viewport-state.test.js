@@ -17,10 +17,11 @@ test('pans and zooms around the supplied anchor', () => {
   assert.deepEqual(zoomed, { scale: 2, x: -52, y: -124, locked: false });
 });
 
-test('preserves locked state when reset and ignores pan while locked', () => {
+test('preserves locked state when reset and blocks pan and zoom while locked', () => {
   const panned = pan(createViewportState(), 24, -12);
   const locked = setLocked(panned, true);
 
   assert.deepEqual(pan(locked, 9, 7), locked);
+  assert.strictEqual(zoomAt(locked, 2, 100, 100), locked);
   assert.deepEqual(resetViewportState(locked), { scale: 1, x: 0, y: 0, locked: true });
 });
