@@ -11,7 +11,7 @@ export function pan(state, dx, dy) {
 export function zoomAt(state, nextScale, anchorX, anchorY) {
   if (state.locked) return state;
 
-  const scale = Math.max(1, Math.min(5, nextScale));
+  const scale = Math.max(0.1, Math.min(5, nextScale));
   const ratio = scale / state.scale;
 
   return {
