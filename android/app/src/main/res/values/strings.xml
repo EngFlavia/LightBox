@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LightBox</string>
+    <string name="title_activity_main">LightBox</string>
+    <string name="package_name">com.engflavia.lightbox</string>
+    <string name="custom_url_scheme">com.engflavia.lightbox</string>
+</resources>

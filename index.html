@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>LightBox Mobile</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="lightbox" aria-label="Visualizador de imagens">
+      <section id="viewport" class="viewport" aria-label="Área da imagem">
+        <img id="image" alt="Imagem selecionada" hidden>
+        <p id="empty-state" class="empty-state">Abra uma imagem para começar</p>
+      </section>
+
+      <header class="topbar">
+        <button id="open-button" class="icon-button" type="button">Abrir imagem</button>
+        <input id="file-input" type="file" accept="image/*" class="visually-hidden">
+        <button id="save-button" class="icon-button" type="button" disabled>Salvar PNG</button>
+        <button id="reset-button" class="icon-button" type="button" disabled>Redefinir</button>
+        <button id="lock-button" class="icon-button lock-button" type="button" aria-pressed="false" aria-label="Bloquear gestos" disabled>🔓 <span>Desbloqueado</span></button>
+      </header>
+
+      <p id="status" class="status" role="status" aria-live="polite">Nenhuma imagem carregada.</p>
+
+      <section class="control-sheet" aria-label="Transformar imagem">
+        <button id="transform-button" class="transform-button" type="button" aria-expanded="true" aria-controls="transform-controls">Transformar</button>
+        <div id="transform-controls" class="transform-controls">
+          <button id="grayscale-button" type="button" aria-pressed="false" disabled>Escala de cinza</button>
+          <button id="sepia-button" type="button" aria-pressed="false" disabled>Sépia</button>
+          <div class="contrast-controls" aria-label="Contraste">
+            <button id="contrast-down-button" type="button" aria-label="Diminuir contraste" disabled>−</button>
+            <output id="contrast-value" for="contrast-down-button contrast-up-button">Contraste 0</output>
+            <button id="contrast-up-button" type="button" aria-label="Aumentar contraste" disabled>+</button>
+          </div>
+          <button id="original-button" type="button" disabled>Original</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
