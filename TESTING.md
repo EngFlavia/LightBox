@@ -8,6 +8,12 @@
 6. Exercite Escala de cinza, Sépia, contraste +/−, Original e Redefinir, verificando o texto de estado e as mudanças visuais.
 7. Verifique foco visível por teclado, leitura dos botões pressionados por leitor de tela e o layout em telas estreitas com área segura.
 
+## Salvar PNG
+
+1. Confirme que **Salvar PNG** permanece desabilitado até a imagem terminar de carregar.
+2. Aplique pan, zoom e filtros, salve e confirme que o PNG preserva o enquadramento atual, as áreas vazias transparentes e a resolução do viewport pela densidade de pixels da tela.
+3. Confirme o nome `<nome>-lightbox.png`, a mensagem de sucesso (ou falha) e que a imagem carregada permanece visível, sem ser substituída, após salvar.
+
 ## Teste automatizado
 
 ```powershell
