@@ -1,0 +1,16 @@
+// The package manager uses versionCode to decide whether an APK is an update.
+// Unix time in seconds fits Android's signed 32-bit versionCode until 2038. The
+// local state file makes repeated builds in the same second strictly increasing.
+def timestampVersion = Math.floorDiv(System.currentTimeMillis(), 1000L)
+def versionStateFile = file('.lightbox-version-code')
+def previousVersion = versionStateFile.exists() ? versionStateFile.text.trim().toLong() : 0L
+def lightBoxBuildVersion = Math.max(timestampVersion, previousVersion + 1L)
+
+if (lightBoxBuildVersion > Integer.MAX_VALUE) {
+    throw new GradleException('The Android versionCode timestamp exceeds the supported integer range.')
+}
+
+ext.lightBoxVersionCode = lightBoxBuildVersion.intValue()
+ext.lightBoxVersionName = "1.0.${lightBoxBuildVersion}"
+
+versionStateFile.text = "${lightBoxBuildVersion}\n"

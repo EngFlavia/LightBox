@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test",
     "sync:web": "node scripts/sync-web.mjs",
-    "android:sync": "npm run sync:web && npx cap sync android"
+    "android:sync": "npm run sync:web && npx cap sync android",
+    "test:android-update": "node scripts/verify-android-update-policy.cjs"
   },
   "devDependencies": {
     "@capacitor/android": "^8.4.2",
