@@ -6,6 +6,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
@@ -34,8 +35,10 @@ public class MainActivity extends BridgeActivity {
             webView.clearHistory();
         }
 
-        // Keep the browser's persistent storage intact: it can hold user preferences
-        // and data. Only the disposable WebView cache is invalidated on an update.
+        // A previous version can leave a service worker and Cache Storage profile
+        // that serves stale HTML. Clear it once per app version so bundled assets win.
+        WebStorage.getInstance().deleteAllData();
+
         preferences.edit().putInt(LAST_VERSION_CODE, installedVersionCode).apply();
 
         if (webView != null) {

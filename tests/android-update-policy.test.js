@@ -21,12 +21,11 @@ test('derives the Android versionCode from the build time instead of a fixed val
   assert.doesNotMatch(buildFile, /versionCode\s+1\b/);
 });
 
-test('clears only the WebView cache once when the installed versionCode changes', async () => {
+test('clears WebView cache and service-worker storage once when the installed versionCode changes', async () => {
   const activity = await projectFile('android/app/src/main/java/com/engflavia/lightbox/MainActivity.java');
 
   assert.match(activity, /getSharedPreferences\(/);
+  assert.match(activity, /WebStorage\.getInstance\(\)\.deleteAllData\(\)/);
   assert.match(activity, /clearCache\(true\)/);
   assert.match(activity, /clearHistory\(\)/);
-  assert.doesNotMatch(activity, /WebStorage/);
-  assert.doesNotMatch(activity, /deleteAllData\(/);
 });
