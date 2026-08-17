@@ -50,7 +50,7 @@ test('uses a Carregar menu with image, projects and save actions', async () => {
   assert.match(markup, /<button id="open-button"[^>]*>Carregar<\/button>/);
   assert.match(markup, /<button id="open-image-button"[^>]*>Carregar Imagem<\/button>/);
   assert.match(markup, /<button id="open-project-button"[^>]*>Projetos salvos<\/button>/);
-  assert.match(markup, /<button id="save-button"[^>]*>Salvar<\/button>/);
+  assert.match(markup, /<label class="language-selector"[\s\S]*?<\/label>\s*<button id="save-button"[^>]*>💾<\/button>/);
   assert.doesNotMatch(markup, /id="export-button"/);
   assert.match(controls, /<button id="original-button"[^>]*>Original<\/button>[\s\S]*<button id="grayscale-button"[^>]*>Escala De Cinza<\/button>/);
 });

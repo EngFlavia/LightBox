@@ -19,13 +19,13 @@
           <div id="load-actions" class="load-actions" hidden>
             <button id="open-image-button" type="button" data-i18n="openImage">Carregar Imagem</button>
             <button id="open-project-button" type="button" data-i18n="openProject">Projetos salvos</button>
-            <button id="save-button" type="button" data-i18n="saveProject" disabled>Salvar</button>
           </div>
           <div id="saved-projects" class="load-actions" hidden></div>
         </div>
         <input id="file-input" type="file" accept="image/*" class="visually-hidden">
         <input id="project-input" type="file" accept=".lightbox,application/json" class="visually-hidden">
-        <label class="language-selector" for="language-select"><span data-i18n="language">Idioma</span><select id="language-select" aria-label="Idioma"><option value="pt">PT</option><option value="es">ES</option><option value="en">EN</option></select></label>
+        <label class="language-selector" for="language-select"><select id="language-select" aria-label="Idioma"><option value="pt">PT</option><option value="es">ES</option><option value="en">EN</option></select></label>
+        <button id="save-button" class="icon-button save-button" type="button" data-i18n-aria-label="saveProject" aria-label="Salvar" disabled>💾</button>
         <button id="lock-button" class="icon-button lock-button" type="button" aria-pressed="false" aria-label="Bloquear gestos" disabled>🔓</button>
       </header>
 

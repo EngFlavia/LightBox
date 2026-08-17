@@ -16,6 +16,7 @@ select { min-height: 44px; border: 0; border-radius: .75rem; padding: .4rem; fon
 .load-actions button { text-align: left; }
 .lock-button { margin-left: auto; }
 .lock-button { min-width: 64px; min-height: 58px; padding: .35rem .55rem; color: #facc15; font-size: 2.4rem; line-height: 1; text-shadow: 0 2px 4px rgb(0 0 0 / .65); }
+.save-button { font-size: 1.5rem; line-height: 1; }
 .language-selector { display: flex; align-items: center; gap: .35rem; font-size: .8rem; }
 .status { position: absolute; top: calc(max(1rem, env(safe-area-inset-top)) + 3.6rem); left: 50%; z-index: 2; max-width: calc(100% - 2rem); margin: 0; padding: .4rem .65rem; border-radius: 999px; background: rgb(15 23 42 / .78); color: #e2e8f0; font-size: .875rem; text-align: center; transform: translateX(-50%); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s; }
 .status.is-visible { opacity: 1; visibility: visible; transition-delay: 0s; }
