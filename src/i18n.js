@@ -1,7 +1,8 @@
 const translations = {
   pt: {
-    openImage: 'Carregar Imagem',
+    openImage: 'Carregar Imagem', loadMenu: 'Carregar',
     savePng: 'Salvar PNG',
+    saveProject: 'Salvar', openProject: 'Projetos salvos', exportPng: 'Exportar PNG', projectSaved: 'Projeto salvo em Documentos/LightBox.', projectChooseDocuments: 'Na primeira vez, selecione a pasta Documentos.', projectRestored: 'Projeto restaurado.', projectSaveFailed: 'Não foi possível salvar o projeto.', projectLoadFailed: 'Não foi possível abrir o projeto.',
     lockGestures: 'Bloquear gestos',
     unlockGestures: 'Desbloquear gestos',
     unlocked: 'Liberado',
@@ -31,8 +32,9 @@ const translations = {
     gesturesUnlocked: 'Gestos liberados.',
   },
   es: {
-    openImage: 'Cargar Imagen',
+    openImage: 'Cargar Imagen', loadMenu: 'Cargar',
     savePng: 'Guardar PNG',
+    saveProject: 'Guardar', openProject: 'Proyectos guardados', exportPng: 'Exportar PNG', projectSaved: 'Proyecto guardado en Documentos/LightBox.', projectRestored: 'Proyecto restaurado.', projectSaveFailed: 'No se pudo guardar el proyecto.', projectLoadFailed: 'No se pudo abrir el proyecto.',
     lockGestures: 'Bloquear gestos',
     unlockGestures: 'Desbloquear gestos',
     unlocked: 'Desbloqueado',
@@ -62,8 +64,9 @@ const translations = {
     gesturesUnlocked: 'Gestos desbloqueados.',
   },
   en: {
-    openImage: 'Load Image',
+    openImage: 'Load Image', loadMenu: 'Load',
     savePng: 'Save PNG',
+    saveProject: 'Save', openProject: 'Saved projects', exportPng: 'Export PNG', projectSaved: 'Project saved in Documents/LightBox.', projectRestored: 'Project restored.', projectSaveFailed: 'Could not save the project.', projectLoadFailed: 'Could not open the project.',
     lockGestures: 'Lock gestures',
     unlockGestures: 'Unlock gestures',
     unlocked: 'Unlocked',

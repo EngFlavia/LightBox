@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 import {
   createEditPanelState,
+  lockIconMarkup,
   resetImageAdjustments,
+  resolveProjectWriter,
   toggleEditPanel,
 } from '../src/app.js';
 
@@ -15,6 +17,16 @@ test('starts with the edit panel closed and toggles it through Editar', () => {
   assert.deepEqual(closed, { open: false });
   assert.deepEqual(toggleEditPanel(closed), { open: true });
   assert.deepEqual(toggleEditPanel({ open: true }), { open: false });
+});
+
+test('renders the original yellow lock icons for locked and unlocked states', () => {
+  assert.equal(lockIconMarkup(true), '🔒');
+  assert.equal(lockIconMarkup(false), '🔓');
+});
+
+test('uses the native ProjectFile bridge exposed by Capacitor', () => {
+  const writer = { write() {}, list() {} };
+  assert.equal(resolveProjectWriter({ Capacitor: { Plugins: { ProjectFile: writer } } }), writer);
 });
 
 test('Original restores both the viewport and image filters', () => {
@@ -30,11 +42,15 @@ test('Original restores both the viewport and image filters', () => {
   });
 });
 
-test('uses the approved labels and puts Original before Escala De Cinza', async () => {
+test('uses a Carregar menu with image, projects and save actions', async () => {
   const root = new URL('../', import.meta.url);
   const markup = await readFile(new URL('index.html', root), 'utf8');
   const controls = markup.match(/<div id="transform-controls"[\s\S]*?<\/div>/)?.[0] ?? '';
 
-  assert.match(markup, /<button id="open-button"[^>]*>Carregar Imagem<\/button>/);
+  assert.match(markup, /<button id="open-button"[^>]*>Carregar<\/button>/);
+  assert.match(markup, /<button id="open-image-button"[^>]*>Carregar Imagem<\/button>/);
+  assert.match(markup, /<button id="open-project-button"[^>]*>Projetos salvos<\/button>/);
+  assert.match(markup, /<button id="save-button"[^>]*>Salvar<\/button>/);
+  assert.doesNotMatch(markup, /id="export-button"/);
   assert.match(controls, /<button id="original-button"[^>]*>Original<\/button>[\s\S]*<button id="grayscale-button"[^>]*>Escala De Cinza<\/button>/);
 });

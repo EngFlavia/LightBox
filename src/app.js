@@ -1,6 +1,8 @@
 import { changeContrast, createTransformState, resetTransformState, toCssFilter, toggleGrayscale, toggleSepia } from './transform-state.js';
-import { canExportImage, exportFileName, renderComposition } from './image-export.js';
+import { canExportImage, exportFileName } from './image-export.js';
+import { dataUrlToBase64, writeProjectFile } from './file-writer.js';
 import { createI18n } from './i18n.js';
+import { createProjectFile, parseProjectFile } from './project-file.js';
 import { createStatusPresenter } from './status-presenter.js';
 import { createViewportState, pan, resetViewportState, setLocked, zoomAt } from './viewport-state.js';
 
@@ -27,6 +29,21 @@ export function pointerDistance(first, second) {
   return Math.hypot(second.x - first.x, second.y - first.y);
 }
 
+export function lockIconMarkup(locked) {
+  return locked ? '🔒' : '🔓';
+}
+
+export function resolveProjectWriter(globalObject) {
+  const capacitor = globalObject?.Capacitor;
+  return capacitor?.Plugins?.ProjectFile
+    ?? (capacitor?.isNativePlatform?.() ? capacitor.registerPlugin?.('ProjectFile') : null)
+    ?? null;
+}
+
+export function errorMessage(error) {
+  return error?.message || String(error || '');
+}
+
 if (typeof document !== 'undefined') {
   const byId = (id) => document.getElementById(id);
   const image = byId('image');
@@ -37,6 +54,7 @@ if (typeof document !== 'undefined') {
   const statusPresenter = createStatusPresenter(status);
   const fileInput = byId('file-input');
   const languageSelect = byId('language-select');
+  const nativeProjectWriter = resolveProjectWriter(window);
   const controls = ['save-button', 'lock-button', 'grayscale-button', 'sepia-button', 'contrast-down-button', 'contrast-up-button', 'original-button'].map(byId);
   const activePointers = new Map();
   let viewportState = createViewportState();
@@ -60,7 +78,7 @@ if (typeof document !== 'undefined') {
     image.style.filter = toCssFilter(transformState);
     byId('lock-button').setAttribute('aria-pressed', String(viewportState.locked));
     byId('lock-button').setAttribute('aria-label', i18n.t(viewportState.locked ? 'unlockGestures' : 'lockGestures'));
-    byId('lock-label').textContent = i18n.t(viewportState.locked ? 'locked' : 'unlocked');
+    byId('lock-button').innerHTML = lockIconMarkup(viewportState.locked);
     byId('grayscale-button').setAttribute('aria-pressed', String(transformState.grayscale));
     byId('sepia-button').setAttribute('aria-pressed', String(transformState.sepia));
     byId('contrast-value').value = i18n.t('contrast', { value: transformState.contrast });
@@ -72,20 +90,18 @@ if (typeof document !== 'undefined') {
     setStatus(i18n.t('adjustmentsRestored'));
   }
   function setControlsEnabled(enabled) { controls.forEach((control) => { control.disabled = !enabled; }); }
-  function saveImage() {
+  const readAsDataUrl = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+  async function saveProject() {
     if (!canExportImage(image)) { setStatus(i18n.t('imageNotReady')); return; }
-    const canvas = document.createElement('canvas');
-    renderComposition({ canvas, image, viewportWidth: viewport.clientWidth, viewportHeight: viewport.clientHeight, imageWidth: image.clientWidth, imageHeight: image.clientHeight, viewportState, transformState, pixelRatio: window.devicePixelRatio || 1 });
-    canvas.toBlob((blob) => {
-      if (!blob) { setStatus(i18n.t('imageSaveFailed')); return; }
-      const downloadUrl = URL.createObjectURL(blob);
-      const download = document.createElement('a');
-      download.href = downloadUrl;
-      download.download = exportFileName(imageFileName);
-      download.click();
-      URL.revokeObjectURL(downloadUrl);
-      setStatus(i18n.t('imageSaved'));
-    }, 'image/png');
+    if (!nativeProjectWriter) { setStatus(i18n.t('projectSaveFailed')); return; }
+    try {
+      const dataUrl = objectUrl.startsWith('data:') ? objectUrl : await readAsDataUrl(fileInput.files[0]);
+      const name = `${exportFileName(imageFileName).replace(/-lightbox\.png$/, '')}.lightbox`;
+      const project = createProjectFile({ imageDataUrl: dataUrl, imageFileName, viewportState, transformState, referenceViewport: { width: viewport.clientWidth, height: viewport.clientHeight } });
+      setStatus(i18n.t('projectChooseDocuments'));
+      await writeProjectFile({ nativeWriter: nativeProjectWriter, base64: dataUrlToBase64(`data:application/json;base64,${btoa(unescape(encodeURIComponent(project)))}`), fileName: name });
+      setStatus(i18n.t('projectSaved'));
+    } catch (error) { setStatus(`${i18n.t('projectSaveFailed')} ${errorMessage(error)}`.trim()); }
   }
   function updatePinch() {
     const points = [...activePointers.values()];
@@ -97,7 +113,31 @@ if (typeof document !== 'undefined') {
     render();
   }
 
-  byId('open-button').addEventListener('click', () => fileInput.click());
+  const loadActions = byId('load-actions');
+  const savedProjects = byId('saved-projects');
+  function closeLoadMenu() { loadActions.hidden = true; savedProjects.hidden = true; byId('open-button').setAttribute('aria-expanded', 'false'); }
+  byId('open-button').addEventListener('click', () => { loadActions.hidden = !loadActions.hidden; byId('open-button').setAttribute('aria-expanded', String(!loadActions.hidden)); });
+  byId('open-image-button').addEventListener('click', () => { closeLoadMenu(); fileInput.click(); });
+  async function restoreProject(text) {
+    const project = parseProjectFile(text);
+    imageFileName = project.imageFileName; objectUrl = project.imageDataUrl; image.src = objectUrl;
+    viewportState = project.viewportState; transformState = project.transformState;
+    image.hidden = false; emptyState.hidden = true; render(); setStatus(i18n.t('projectRestored'));
+  }
+  byId('open-project-button').addEventListener('click', async () => {
+    if (!nativeProjectWriter) { closeLoadMenu(); byId('project-input').click(); return; }
+    try {
+      const { projects = [] } = await nativeProjectWriter.list();
+      if (!projects.length) { closeLoadMenu(); setStatus('Nenhum projeto salvo encontrado.'); return; }
+      savedProjects.replaceChildren(...projects.map(({ name, content }) => {
+        const button = document.createElement('button'); button.type = 'button'; button.textContent = name;
+        button.addEventListener('click', () => { closeLoadMenu(); restoreProject(new TextDecoder().decode(Uint8Array.from(atob(content), (char) => char.charCodeAt(0)))).catch(() => setStatus(i18n.t('projectLoadFailed'))); });
+        return button;
+      }));
+      loadActions.hidden = true; savedProjects.hidden = false;
+    } catch { closeLoadMenu(); setStatus(i18n.t('projectLoadFailed')); }
+  });
+  document.addEventListener('pointerdown', (event) => { if (!loadActions.hidden && !event.target.closest('.load-menu')) closeLoadMenu(); });
   languageSelect.addEventListener('change', () => { i18n.setLanguage(languageSelect.value); translatePage(); render(); });
   fileInput.addEventListener('change', () => {
     const [file] = fileInput.files;
@@ -116,7 +156,8 @@ if (typeof document !== 'undefined') {
   });
   image.addEventListener('load', () => { setControlsEnabled(true); });
   image.addEventListener('error', () => { setControlsEnabled(false); setStatus(i18n.t('imageLoadFailed')); });
-  byId('save-button').addEventListener('click', saveImage);
+  byId('project-input').addEventListener('change', async () => { try { await restoreProject(await byId('project-input').files[0].text()); } catch { setStatus(i18n.t('projectLoadFailed')); } });
+  byId('save-button').addEventListener('click', () => { closeLoadMenu(); saveProject(); });
   byId('lock-button').addEventListener('click', () => { viewportState = setLocked(viewportState, !viewportState.locked); activePointers.clear(); pinch = null; render(); setStatus(i18n.t(viewportState.locked ? 'gesturesLocked' : 'gesturesUnlocked')); });
   byId('grayscale-button').addEventListener('click', () => { transformState = toggleGrayscale(transformState); render(); });
   byId('sepia-button').addEventListener('click', () => { transformState = toggleSepia(transformState); render(); });
