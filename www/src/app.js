@@ -29,6 +29,29 @@ export function pointerDistance(first, second) {
   return Math.hypot(second.x - first.x, second.y - first.y);
 }
 
+export function createHeldAction({ action, setDelay = setTimeout, clearDelay = clearTimeout, initialDelay = 350, repeatDelay = 90 }) {
+  let active = false;
+  let timer = null;
+  const repeat = () => {
+    if (!active) return;
+    action();
+    timer = setDelay(repeat, repeatDelay);
+  };
+  return {
+    start() {
+      if (active) return;
+      active = true;
+      action();
+      timer = setDelay(repeat, initialDelay);
+    },
+    stop() {
+      active = false;
+      if (timer) clearDelay(timer);
+      timer = null;
+    },
+  };
+}
+
 export function lockIconMarkup(locked) {
   return locked ? '🔒' : '🔓';
 }
@@ -55,7 +78,7 @@ if (typeof document !== 'undefined') {
   const fileInput = byId('file-input');
   const languageSelect = byId('language-select');
   const nativeProjectWriter = resolveProjectWriter(window);
-  const controls = ['save-button', 'lock-button', 'grayscale-button', 'sepia-button', 'contrast-down-button', 'contrast-up-button', 'original-button'].map(byId);
+  const controls = ['lock-button', 'grayscale-button', 'sepia-button', 'contrast-down-button', 'contrast-up-button', 'original-button'].map(byId);
   const activePointers = new Map();
   let viewportState = createViewportState();
   let transformState = createTransformState();
@@ -113,31 +136,7 @@ if (typeof document !== 'undefined') {
     render();
   }
 
-  const loadActions = byId('load-actions');
-  const savedProjects = byId('saved-projects');
-  function closeLoadMenu() { loadActions.hidden = true; savedProjects.hidden = true; byId('open-button').setAttribute('aria-expanded', 'false'); }
-  byId('open-button').addEventListener('click', () => { loadActions.hidden = !loadActions.hidden; byId('open-button').setAttribute('aria-expanded', String(!loadActions.hidden)); });
-  byId('open-image-button').addEventListener('click', () => { closeLoadMenu(); fileInput.click(); });
-  async function restoreProject(text) {
-    const project = parseProjectFile(text);
-    imageFileName = project.imageFileName; objectUrl = project.imageDataUrl; image.src = objectUrl;
-    viewportState = project.viewportState; transformState = project.transformState;
-    image.hidden = false; emptyState.hidden = true; render(); setStatus(i18n.t('projectRestored'));
-  }
-  byId('open-project-button').addEventListener('click', async () => {
-    if (!nativeProjectWriter) { closeLoadMenu(); byId('project-input').click(); return; }
-    try {
-      const { projects = [] } = await nativeProjectWriter.list();
-      if (!projects.length) { closeLoadMenu(); setStatus('Nenhum projeto salvo encontrado.'); return; }
-      savedProjects.replaceChildren(...projects.map(({ name, content }) => {
-        const button = document.createElement('button'); button.type = 'button'; button.textContent = name;
-        button.addEventListener('click', () => { closeLoadMenu(); restoreProject(new TextDecoder().decode(Uint8Array.from(atob(content), (char) => char.charCodeAt(0)))).catch(() => setStatus(i18n.t('projectLoadFailed'))); });
-        return button;
-      }));
-      loadActions.hidden = true; savedProjects.hidden = false;
-    } catch { closeLoadMenu(); setStatus(i18n.t('projectLoadFailed')); }
-  });
-  document.addEventListener('pointerdown', (event) => { if (!loadActions.hidden && !event.target.closest('.load-menu')) closeLoadMenu(); });
+  byId('open-button').addEventListener('click', () => fileInput.click());
   languageSelect.addEventListener('change', () => { i18n.setLanguage(languageSelect.value); translatePage(); render(); });
   fileInput.addEventListener('change', () => {
     const [file] = fileInput.files;
@@ -156,13 +155,18 @@ if (typeof document !== 'undefined') {
   });
   image.addEventListener('load', () => { setControlsEnabled(true); });
   image.addEventListener('error', () => { setControlsEnabled(false); setStatus(i18n.t('imageLoadFailed')); });
-  byId('project-input').addEventListener('change', async () => { try { await restoreProject(await byId('project-input').files[0].text()); } catch { setStatus(i18n.t('projectLoadFailed')); } });
-  byId('save-button').addEventListener('click', () => { closeLoadMenu(); saveProject(); });
   byId('lock-button').addEventListener('click', () => { viewportState = setLocked(viewportState, !viewportState.locked); activePointers.clear(); pinch = null; render(); setStatus(i18n.t(viewportState.locked ? 'gesturesLocked' : 'gesturesUnlocked')); });
   byId('grayscale-button').addEventListener('click', () => { transformState = toggleGrayscale(transformState); render(); });
   byId('sepia-button').addEventListener('click', () => { transformState = toggleSepia(transformState); render(); });
-  byId('contrast-down-button').addEventListener('click', () => { transformState = changeContrast(transformState, -10); render(); });
-  byId('contrast-up-button').addEventListener('click', () => { transformState = changeContrast(transformState, 10); render(); });
+  function bindHeldContrast(buttonId, delta) {
+    const button = byId(buttonId);
+    const held = createHeldAction({ action: () => { transformState = changeContrast(transformState, delta); render(); } });
+    button.addEventListener('pointerdown', (event) => { if (button.disabled) return; event.preventDefault(); button.setPointerCapture(event.pointerId); held.start(); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((eventName) => button.addEventListener(eventName, () => held.stop()));
+    button.addEventListener('click', (event) => { if (event.detail === 0) { transformState = changeContrast(transformState, delta); render(); } });
+  }
+  bindHeldContrast('contrast-down-button', -10);
+  bindHeldContrast('contrast-up-button', 10);
   byId('original-button').addEventListener('click', resetAll);
   byId('transform-button').addEventListener('click', () => {
     editPanelState = toggleEditPanel(editPanelState);
