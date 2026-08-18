@@ -1,4 +1,5 @@
 import { changeContrast, createTransformState, resetTransformState, toCssFilter, toggleGrayscale, toggleSepia } from './transform-state.js';
+import { getScreenBrightness, setScreenBrightness } from './screen-brightness.js';
 import { canExportImage, exportFileName } from './image-export.js';
 import { dataUrlToBase64, writeProjectFile } from './file-writer.js';
 import { createI18n } from './i18n.js';
@@ -57,9 +58,13 @@ export function lockIconMarkup(locked) {
 }
 
 export function resolveProjectWriter(globalObject) {
+  return resolveNativePlugin(globalObject, 'ProjectFile');
+}
+
+export function resolveNativePlugin(globalObject, pluginName) {
   const capacitor = globalObject?.Capacitor;
-  return capacitor?.Plugins?.ProjectFile
-    ?? (capacitor?.isNativePlatform?.() ? capacitor.registerPlugin?.('ProjectFile') : null)
+  return capacitor?.Plugins?.[pluginName]
+    ?? (capacitor?.isNativePlatform?.() ? capacitor.registerPlugin?.(pluginName) : null)
     ?? null;
 }
 
@@ -78,7 +83,8 @@ if (typeof document !== 'undefined') {
   const fileInput = byId('file-input');
   const languageSelect = byId('language-select');
   const nativeProjectWriter = resolveProjectWriter(window);
-  const controls = ['lock-button', 'grayscale-button', 'sepia-button', 'contrast-down-button', 'contrast-up-button', 'original-button'].map(byId);
+  const nativeScreenBrightness = resolveNativePlugin(window, 'ScreenBrightness');
+  const controls = ['lock-button', 'grayscale-button', 'sepia-button', 'contrast-down-button', 'contrast-up-button', 'brightness-down-button', 'brightness-up-button', 'original-button'].map(byId);
   const activePointers = new Map();
   let viewportState = createViewportState();
   let transformState = createTransformState();
@@ -86,9 +92,11 @@ if (typeof document !== 'undefined') {
   let objectUrl = null;
   let imageFileName = '';
   let pinch = null;
+  let screenBrightnessLevel = 100;
 
   function hasImage() { return Boolean(objectUrl); }
   function setStatus(message) { statusPresenter.show(message); }
+  getScreenBrightness(nativeScreenBrightness).then((level) => { screenBrightnessLevel = level; render(); }).catch(() => {});
   function translatePage() {
     document.documentElement.lang = i18n.language === 'pt' ? 'pt-BR' : i18n.language;
     document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = i18n.t(element.dataset.i18n); });
@@ -106,6 +114,8 @@ if (typeof document !== 'undefined') {
     byId('sepia-button').setAttribute('aria-pressed', String(transformState.sepia));
     byId('contrast-value').value = i18n.t('contrast', { value: transformState.contrast });
     byId('contrast-value').textContent = i18n.t('contrast', { value: transformState.contrast });
+    byId('brightness-value').value = i18n.t('brightness', { value: screenBrightnessLevel });
+    byId('brightness-value').textContent = i18n.t('brightness', { value: screenBrightnessLevel });
   }
   function resetAll() {
     ({ viewportState, transformState } = resetImageAdjustments(viewportState, transformState));
@@ -158,15 +168,29 @@ if (typeof document !== 'undefined') {
   byId('lock-button').addEventListener('click', () => { viewportState = setLocked(viewportState, !viewportState.locked); activePointers.clear(); pinch = null; render(); setStatus(i18n.t(viewportState.locked ? 'gesturesLocked' : 'gesturesUnlocked')); });
   byId('grayscale-button').addEventListener('click', () => { transformState = toggleGrayscale(transformState); render(); });
   byId('sepia-button').addEventListener('click', () => { transformState = toggleSepia(transformState); render(); });
-  function bindHeldContrast(buttonId, delta) {
+  function bindHeldAdjustment(buttonId, delta, adjust) {
     const button = byId(buttonId);
-    const held = createHeldAction({ action: () => { transformState = changeContrast(transformState, delta); render(); } });
+    const held = createHeldAction({ action: () => { transformState = adjust(transformState, delta); render(); } });
     button.addEventListener('pointerdown', (event) => { if (button.disabled) return; event.preventDefault(); button.setPointerCapture(event.pointerId); held.start(); });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((eventName) => button.addEventListener(eventName, () => held.stop()));
-    button.addEventListener('click', (event) => { if (event.detail === 0) { transformState = changeContrast(transformState, delta); render(); } });
+    button.addEventListener('click', (event) => { if (event.detail === 0) { transformState = adjust(transformState, delta); render(); } });
   }
-  bindHeldContrast('contrast-down-button', -10);
-  bindHeldContrast('contrast-up-button', 10);
+  bindHeldAdjustment('contrast-down-button', -10, changeContrast);
+  bindHeldAdjustment('contrast-up-button', 10, changeContrast);
+  function adjustScreenBrightness(delta) {
+    screenBrightnessLevel = Math.max(0, Math.min(100, screenBrightnessLevel + delta));
+    setScreenBrightness(nativeScreenBrightness, screenBrightnessLevel).catch(() => {});
+    render();
+  }
+  function bindHeldScreenBrightness(buttonId, delta) {
+    const button = byId(buttonId);
+    const held = createHeldAction({ action: () => adjustScreenBrightness(delta) });
+    button.addEventListener('pointerdown', (event) => { if (button.disabled) return; event.preventDefault(); button.setPointerCapture(event.pointerId); held.start(); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((eventName) => button.addEventListener(eventName, () => held.stop()));
+    button.addEventListener('click', (event) => { if (event.detail === 0) adjustScreenBrightness(delta); });
+  }
+  bindHeldScreenBrightness('brightness-down-button', -10);
+  bindHeldScreenBrightness('brightness-up-button', 10);
   byId('original-button').addEventListener('click', resetAll);
   byId('transform-button').addEventListener('click', () => {
     editPanelState = toggleEditPanel(editPanelState);

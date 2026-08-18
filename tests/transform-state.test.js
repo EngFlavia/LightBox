@@ -9,7 +9,7 @@ import {
   toCssFilter,
 } from '../src/transform-state.js';
 
-test('layers grayscale, sepia, and contrast into the CSS filter', () => {
+test('layers grayscale, sepia and contrast into the CSS filter', () => {
   const initial = createTransformState();
   const grayscale = toggleGrayscale(initial);
   const sepia = toggleSepia(grayscale);

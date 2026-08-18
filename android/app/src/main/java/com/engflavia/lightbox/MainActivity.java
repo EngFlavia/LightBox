@@ -17,6 +17,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(ProjectFilePlugin.class);
+        registerPlugin(ScreenBrightnessPlugin.class);
         super.onCreate(savedInstanceState);
         refreshWebViewForAppUpdate();
     }
