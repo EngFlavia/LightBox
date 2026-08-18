@@ -8,6 +8,7 @@ select { min-height: 44px; border: 0; border-radius: .75rem; padding: .4rem; fon
 .lightbox { position: relative; min-height: 100dvh; overflow: hidden; background: radial-gradient(circle at 50% 35%, #24345a, #090d18 70%); }
 .viewport { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; user-select: none; }
 .viewport img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: 0 0; will-change: transform, filter; pointer-events: none; }
+.viewport img[hidden] { display: none; }
 .empty-state { padding: 1rem; color: #cbd5e1; text-align: center; }
 .topbar { position: absolute; top: max(1rem, env(safe-area-inset-top)); left: max(1rem, env(safe-area-inset-left)); right: max(1rem, env(safe-area-inset-right)); display: flex; gap: .5rem; align-items: center; z-index: 2; }
 .load-menu { position: relative; }

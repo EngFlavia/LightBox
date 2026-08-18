@@ -69,3 +69,10 @@ test('uses a single Carregar button to open an image', async () => {
   assert.doesNotMatch(markup, /id="export-button"/);
   assert.match(controls, /<button id="original-button"[^>]*>Original<\/button>[\s\S]*<button id="grayscale-button"[^>]*>Escala De Cinza<\/button>/);
 });
+
+test('keeps the empty image element hidden until an image is selected', async () => {
+  const root = new URL('../', import.meta.url);
+  const styles = await readFile(new URL('styles.css', root), 'utf8');
+
+  assert.match(styles, /\.viewport img\[hidden\] \{ display: none; \}/);
+});
